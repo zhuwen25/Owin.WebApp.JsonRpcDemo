@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>                
+        <TargetFrameworks>net9.0;net472</TargetFrameworks>
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\AzureHypervisor\AzureHypervisor.csproj" />
+      <ProjectReference Include="..\JsonRpcContract\JsonRpcContract.csproj" />
+      <ProjectReference Include="..\VmwareHypervisor\VmwareHypervisor.csproj" />
+    </ItemGroup>
+
+</Project>
