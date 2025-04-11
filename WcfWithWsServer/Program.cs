@@ -153,8 +153,6 @@ namespace WcfWithWsServer
                 //RawHttpListener(url);
 
                 await Task.Delay(Timeout.Infinite, cancellationTokenSource.Token);
-
-
                 Console.WriteLine("Press Ctrl+C to exit.");
             }
             catch (OperationCanceledException e)

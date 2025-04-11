@@ -30,6 +30,7 @@ public class JsonRcpHypervisorService
             //rpcHypervisor = _hypervisors.GetOrAdd(identitier, new JsonRpcHypervisor(webSocket, _hypervisorFactory,identitier));
         }
 
+
         await (rpcHypervisor?.HandleRpcSessionAsync(s =>
         {
             Console.WriteLine($"Session closed: {s}");

@@ -1,14 +1,17 @@
 using Microsoft.Owin;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 using System.Web.Http;
 using System.Web.UI.WebControls;
+using System.Web.WebSockets;
 using WcfWithWsServer.JsonRpcHypervisor;
 
 namespace WcfWithWsServer.WsApiCtler
@@ -25,87 +28,162 @@ namespace WcfWithWsServer.WsApiCtler
                    ex.InnerException is System.Net.Sockets.SocketException;
         }
 
-        private async Task<WebSocket> AcceptWebSocketAsync(IOwinContext context)
+        private Task AcceptWebSocketAsync(IOwinContext context, Func<WebSocket,Task> onAccepted = null)
         {
-            var acceptToken = new TaskCompletionSource<WebSocket>();
+            var tcs = new TaskCompletionSource<WebSocket>();
             // Get the WebSocket accept function from OWIN environment
-            var accept =
-                context.Get<Action<IDictionary<string, object>, Func<IDictionary<string, object>, Task>>>(
-                    "websocket.Accept");
+            var accept = context.Get<Action<IDictionary<string, object>, Func<IDictionary<string, object>, Task>>>("websocket.Accept");
             if (accept == null)
             {
-                throw new NotSupportedException("WebSocket support not available");
+                var ex =  new NotSupportedException("WebSocket support not available");
+                tcs.TrySetException(ex);
+                return tcs.Task;
+            }
+
+            IDictionary<string, object> acceptOptions = null; // Options for the accept call
+            string selectedSubProtocol = null; // The protocol we select
+            const string SupportedSubProtocol = "jsonrpc";
+            // 1. Check client's requested protocols
+            var clientRequestedProtocolsHeader = context.Request.Headers.Get("Sec-WebSocket-Protocol");
+            if (!string.IsNullOrEmpty(clientRequestedProtocolsHeader))
+            {
+                // 2. Parse the comma-separated list, trim whitespace
+                var clientProtocols = clientRequestedProtocolsHeader
+                    .Split(',')
+                    .Select(p => p.Trim())
+                    .Where(p => !string.IsNullOrEmpty(p));
+
+                // 3. Check if the client requested the protocol we support (case-insensitive check is safer)
+                if (clientProtocols.Contains(SupportedSubProtocol, StringComparer.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine(
+                        $"WebSocketMiddleware: Client requested '{SupportedSubProtocol}'. Accepting with this subprotocol.");
+                    selectedSubProtocol = SupportedSubProtocol; // Select it
+
+                    // 4. Prepare the options dictionary for the accept call
+                    acceptOptions = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        { "websocket.SubProtocol", selectedSubProtocol }
+                    };
+                }
+                else
+                {
+                    Console.WriteLine($"WebSocketMiddleware: Client requested protocols ({clientRequestedProtocolsHeader}), but not '{SupportedSubProtocol}'. Proceeding without subprotocol.");
+                    // We don't select a subprotocol if the client didn't request the one we support.
+                }
+            }
+            else
+            {
+                Console.WriteLine("WebSocketMiddleware: Client did not request any subprotocol.");
+                // Proceed without subprotocol
             }
 
             // Accept the WebSocket connection
-            accept(null, async env =>
+            accept(acceptOptions, env =>
             {
                 //var ws = env["websocket.WebSocket"] as WebSocket;
                 var wsContext = env["System.Net.WebSockets.WebSocketContext"] as WebSocketContext;
-                acceptToken.SetResult(wsContext?.WebSocket);
-                //return wsContext.WebSocket;
+                if (wsContext?.WebSocket != null && onAccepted != null ) {
+                    // Call the provided action with the accepted WebSocket
+                    tcs.SetResult(wsContext.WebSocket);
+                    onAccepted(wsContext.WebSocket);
+                }
+                else
+                {
+                    tcs.SetResult(null);
+                    Console.WriteLine("WebSocketMiddleware: WebSocket context is null or action not provided.");
+                }
+                return Task.CompletedTask;
             });
-            return await acceptToken.Task;
+            return tcs.Task;
         }
+
 
         [HttpGet]
         [Route("connect")]
-        public async Task   HypervisorConnect()
+        public async Task HypervisorConnect()
         {
             IOwinContext owinContext = Request.GetOwinContext();
             // Validate WebSocket request
-            if (!string.Equals(owinContext.Request.Headers["Upgrade"], "websocket", StringComparison.OrdinalIgnoreCase) ||
+            if (!string.Equals(owinContext.Request.Headers["Upgrade"], "websocket",
+                    StringComparison.OrdinalIgnoreCase) ||
                 owinContext.Request.Headers["Connection"]?.IndexOf("upgrade", StringComparison.OrdinalIgnoreCase) < 0)
             {
                 owinContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
                 return;
             }
-            var httpListenerContext = owinContext.Get<HttpListenerContext>(typeof(HttpListenerContext).FullName);
-            if (httpListenerContext == null)
-            {
-                owinContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-                return;
-            }
+
+            // var httpListenerContext = owinContext.Get<HttpListenerContext>(typeof(HttpListenerContext).FullName);
+            // if (httpListenerContext == null)
+            // {
+            //     owinContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+            //     return;
+            // }
+
+           // WebSocket webSocket = null;
             try
             {
-                var webSocketContext = await httpListenerContext.AcceptWebSocketAsync(null);
-                WebSocket webSocket = webSocketContext.WebSocket;
+                //var webSocketContext = await httpListenerContext.AcceptWebSocketAsync("jsonrpc").ConfigureAwait(false);
+                //webSocket = webSocketContext.WebSocket;
+                // await AcceptWebSocketAsync(owinContext, ( async socket =>
+                // {
+                //     if (socket.State == WebSocketState.Open)
+                //     {
+                //         string remoteIp = owinContext.Request.RemoteIpAddress;
+                //         int remotePort = owinContext.Request.RemotePort ?? 0;
+                //         // Start WebSocket session (handle messages)
+                //         await JsonRcpHypervisorService.Instance.WebsocketOpenedAsync(socket, remoteIp, remotePort)
+                //             .ConfigureAwait(false);
+                //     }
+                //     else
+                //     {
+                //         throw new InvalidOperationException("WebSocket is not in an open state.");
+                //     }
+                // }));
 
-                if (httpListenerContext.Request.RemoteEndPoint == null)
+                // Below is good
+                var  acceptOptions = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
                 {
-                    // Close connection properly
-                    await webSocket.CloseAsync(WebSocketCloseStatus.InvalidMessageType, "RemoteEndPoint is null", CancellationToken.None);
-                    return;
-                }
+                    { "websocket.SubProtocol", "jsonrpc" }
+                };
+                await OwinWebSocketHelper.AcceptWebSocketAsync(owinContext, async socket =>
+                {
+                    if (socket.State == WebSocketState.Open)
+                    {
+                        string remoteIp = owinContext.Request.RemoteIpAddress;
+                        int remotePort = owinContext.Request.RemotePort ?? 0;
+                        // Start WebSocket session (handle messages)
+                        await JsonRcpHypervisorService.Instance.WebsocketOpenedAsync(socket, remoteIp, remotePort)
+                            .ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("WebSocket is not in an open state.");
+                    }
+                }, acceptOptions);
 
-                string remoteIp = httpListenerContext.Request.RemoteEndPoint.Address.ToString();
-                int remotePort = httpListenerContext.Request.RemoteEndPoint.Port;
-
-                // Start WebSocket session (handle messages)
-                await JsonRcpHypervisorService.Instance.WebsocketOpenedAsync(webSocket, remoteIp, remotePort).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"WebSocket error: {ex.Message}");
             }
-            finally
-            {
-                // OWIN expects the response to be completed.
-                if (owinContext.Response.Body.CanWrite)
-                {
-                    try
-                    {
-                        // Writing an empty response ensures OWIN finalizes the request properly.
-                        owinContext.Response.StatusCode = (int)HttpStatusCode.SwitchingProtocols;
-                        await owinContext.Response.Body.FlushAsync();
-                    }
-                    catch (Exception flushEx)
-                    {
-                        Console.WriteLine($"Error flushing response: {flushEx.Message}");
-                    }
-                }
-            }
-
+            // finally
+            // {
+            //     // OWIN expects the response to be completed.
+            //     if (owinContext.Response.Body.CanWrite)
+            //     {
+            //         try
+            //         {
+            //             // Writing an empty response ensures OWIN finalizes the request properly.
+            //             owinContext.Response.StatusCode = (int)HttpStatusCode.SwitchingProtocols;
+            //             await owinContext.Response.Body.FlushAsync();
+            //         }
+            //         catch (Exception flushEx)
+            //         {
+            //             Console.WriteLine($"Error flushing response: {flushEx.Message}");
+            //         }
+            //     }
+            // }
         }
 
         private async Task ProcessWebSocketCommunication(WebSocket webSocket)

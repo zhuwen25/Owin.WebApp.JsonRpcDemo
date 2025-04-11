@@ -156,6 +156,7 @@
         <Compile Include="JsonRpcHypervisor\JsonRcpHypervisorService.cs" />
         <Compile Include="Program.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>
+        <Compile Include="WebSocketAcceptHelper.cs" />
         <Compile Include="WebSokOwnMiddle.cs" />
         <Compile Include="WsApiCtler\RpcHypervisorController.cs" />
         <Compile Include="WsApiCtler\RpcWsController.cs" />

@@ -7,6 +7,8 @@ using StreamJsonRpc.Reflection;
 using System;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Yz.AzureHypervisor;
@@ -68,19 +70,58 @@ namespace WcfWithWsServer.JsonRpcHypervisor
         private readonly WsJsonRpcHandler _jsonRpcHandler;
         private readonly IHypervisorFactory _factory;
         private readonly string _sessionIdentifier;
-        //private WebSocket _webSocket;
+        private WebSocket _webSocket;
 
         public JsonRpcHypervisor(WebSocket ws , IHypervisorFactory factory , string identifier)
         {
             _factory = factory;
             _jsonRpcHandler = new WsJsonRpcHandler(ws, this);
             _sessionIdentifier = identifier;
-          //  _webSocket = ws;
+            _webSocket = ws;
+        }
+
+        protected virtual T Execute<T>(Func<T> func,[CallerMemberName] string methodName = "", [CallerLineNumber] int lineNumber = 0)
+        {
+            Console.WriteLine($"Executing {methodName} at line {lineNumber}");
+            try
+            {
+                return func();
+            }
+            finally
+            {
+                Console.WriteLine($"Executed {methodName} at line {lineNumber}");
+            }
+        }
+
+        protected static Func<T> WrapExceptions<T>(Func<T> func)
+        {
+            return () =>
+            {
+                try
+                {
+                    return func();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Exception: {ex.Message}");
+                    throw;
+                }
+            };
         }
 
         public async Task<HelloResponse> SayHelloAsync(HelloRequest request, CancellationToken cancellationToken)
         {
-            return await Task.FromResult(new HelloResponse { Message = $"Hello from {this.GetType().Name}" });
+
+            var response = Execute(WrapExceptions(() =>
+            {
+                if (request.IsException)
+                {
+                    throw new Exception("This is a test exception");
+                }
+
+                return new HelloResponse { Message = $"Hello {request?.Name} from {this.GetType().Name}" };
+            }));
+            return await Task.FromResult( response);
         }
 
         public async Task HandleRpcSessionAsync(Action<string> onSessionClosed)
@@ -97,14 +138,6 @@ namespace WcfWithWsServer.JsonRpcHypervisor
             finally
             {
                 onSessionClosed?.Invoke(_sessionIdentifier);
-                // _jsonRpcHandler.Dispose();
-                // if (_webSocket.State == WebSocketState.Open && _webSocket.State
-                //     != WebSocketState.Aborted)
-                // {
-                //     await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
-                // }
-
-             //   Console.WriteLine($"Client {_sessionIdentifier} disconnected");
             }
         }
 
@@ -127,8 +160,11 @@ namespace WcfWithWsServer.JsonRpcHypervisor
         public async Task<VMDiskInfo> GetVMDiskInfoAsync(IConnectionDetail connectionDetail,
             CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            var hypervisor=  await _factory.GetHypervisorAsync(connectionDetail, cancellationToken)
+                .ConfigureAwait(false);
+            return await hypervisor.GetVMDiskInfoAsync(connectionDetail,cancellationToken);
         }
+
 
         public void Dispose()
         {

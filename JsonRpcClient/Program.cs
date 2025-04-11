@@ -21,16 +21,25 @@ internal static class Program
             e.Cancel = true;
         };
 
+        using var webSocket = new ClientWebSocket();
+        webSocket.Options.AddSubProtocol("jsonrpc");
+        webSocket.Options.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
         try
         {
-            // while (cancellationTokenSource.IsCancellationRequested == false)
+            while (cancellationTokenSource.IsCancellationRequested == false)
             {
                 Console.WriteLine("Starting server, Press Ctrl+C to end...");
-                await MainAsync(cancellationTokenSource.Token);
+                await MainAsync(cancellationTokenSource.Token, webSocket);
+                cancellationTokenSource.Token.WaitHandle.WaitOne();
+                Thread.Sleep(1000*50);
             }
         }
         catch (OperationCanceledException e)
         {
+            if (webSocket.State == WebSocketState.Open)
+            {
+                await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+            }
             Console.WriteLine("The operation was canceled.");
         }
         catch (Exception e)
@@ -40,10 +49,8 @@ internal static class Program
         }
     }
 
-    private static async Task MainAsync(CancellationToken cancellationToken)
+    private static async Task MainAsync(CancellationToken cancellationToken , ClientWebSocket webSocket )
     {
-        using var webSocket = new ClientWebSocket();
-        webSocket.Options.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
         try
         {
             //Allow self-signed certificate
@@ -86,10 +93,10 @@ internal static class Program
                 Console.WriteLine("VMDiskInfo detail: " + resp);
             }
 
-            if (webSocket.State == WebSocketState.Open)
-            {
-                await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Finished in client", cancellationToken);
-            }
+            // if (webSocket.State == WebSocketState.Open)
+            // {
+            //     await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Finished in client", cancellationToken);
+            // }
         }
         catch (Exception e)
         {
