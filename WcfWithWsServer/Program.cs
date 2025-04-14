@@ -1,12 +1,21 @@
-﻿using System;
-using System.ServiceModel;
-using Microsoft.Owin.Hosting;
+﻿
+
+
+using System;
 using System.Net;
 using System.Net.WebSockets;
+using System.ServiceModel;
 using System.Threading;
 using System.Threading.Tasks;
 using WcfWithWsServer.WsApiCtler;
+#if NET
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+#else
 
+using Microsoft.Owin.Hosting;
+#endif
 namespace WcfWithWsServer
 {
     [ServiceContract]
@@ -29,7 +38,9 @@ namespace WcfWithWsServer
 
     internal class Program
     {
-        private static void StartOwnServiceHost(ServiceHost serviceHost )
+#if NETFRAMEWORK
+        private static void StartOwnServiceHost(// TODO WCF server APIs are unsupported on .NET Core. Consider rewriting to use gRPC (https://docs.microsoft.com/dotnet/architecture/grpc-for-wcf-developers), ASP.NET Core, or CoreWCF (https://github.com/CoreWCF/CoreWCF) instead.
+ServiceHost serviceHost )
         {
             serviceHost.AddServiceEndpoint(typeof(IMyWcfService), new BasicHttpsBinding(), "");
             serviceHost.Open();
@@ -52,6 +63,7 @@ namespace WcfWithWsServer
         }
 
 
+
         private static IDisposable StartControllerRestApi(string baseAddress)
         {
             try
@@ -67,6 +79,7 @@ namespace WcfWithWsServer
             }
 
         }
+#endif
 
         private static async Task HandleWebSocketConnection(WebSocket webSocket)
         {
@@ -130,6 +143,44 @@ namespace WcfWithWsServer
             }
         }
 
+
+        #if NET
+
+        private static IDisposable StartKestrelServer(string baseAddress)
+        {
+            if (string.IsNullOrEmpty(baseAddress))
+            {
+                baseAddress = "https://0.0.0.0:8080";
+            }
+
+            if (!Uri.TryCreate(baseAddress, UriKind.Absolute, out var uri))
+            {
+                throw new UriFormatException("Invalid url");
+            }
+            var builder = WebApplication.CreateBuilder();
+            builder.Services.AddControllers();
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                if (uri.Scheme == "https")
+                {
+                    options.Listen(uri.Host == "0.0.0.0" ? System.Net.IPAddress.Any : System.Net.IPAddress.Parse(uri.Host), uri.Port, listenOptions =>
+                    {
+                        listenOptions.UseHttps(); // Dev cert or provide custom cert
+                    });
+                }
+                else
+                {
+                    options.Listen(uri.Host == "0.0.0.0" ? System.Net.IPAddress.Any : System.Net.IPAddress.Parse(uri.Host), uri.Port);
+                }
+
+            });
+           return builder.Build();
+
+        }
+
+        #endif
+
+
         public static async Task Main(string[] args)
         {
             var cancellationTokenSource = new CancellationTokenSource();
@@ -143,14 +194,21 @@ namespace WcfWithWsServer
             try
             {
                 Uri baseAddress = new Uri("https://localhost:8080/wcf");
-
+                // TODO WCF server APIs are unsupported on .NET Core. Consider rewriting to use gRPC (https://docs.microsoft.com/dotnet/architecture/grpc-for-wcf-developers), ASP.NET Core, or CoreWCF (https://github.com/CoreWCF/CoreWCF) instead.
+                #if NETFRAMEWORK
                 ServiceHost host = new ServiceHost(typeof(MyWcfService), baseAddress);
                 //StartOwnServiceHost(host);
+
 
                 string url = "https://localhost:8080/wss/";
                 //StartRestApiNoController(url);
                 var webApi =  StartControllerRestApi(url);
                 //RawHttpListener(url);
+                #else
+                var webApi = StartKestrelServer(baseAddress.ToString());
+
+
+                #endif
 
                 await Task.Delay(Timeout.Infinite, cancellationTokenSource.Token);
                 Console.WriteLine("Press Ctrl+C to exit.");

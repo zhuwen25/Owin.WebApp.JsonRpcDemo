@@ -1,5 +1,4 @@
 using HypervisorCreator;
-using Owin.WebSocket;
 using System;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
@@ -41,12 +40,4 @@ public class JsonRcpHypervisorService
         })).ConfigureAwait(false);
     }
 
-    public void WebsocketClosed(WebSocketConnection WebSocket, string remoteIp, int? remotePort)
-    {
-        lock (lockObject)
-        {
-            var identitier =  $"{remoteIp}:{remotePort}";
-            _hypervisors.TryRemove(identitier, out _);
-        }
-    }
 }

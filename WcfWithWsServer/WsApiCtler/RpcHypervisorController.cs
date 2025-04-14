@@ -8,10 +8,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 using System.Web.Http;
-using System.Web.UI.WebControls;
-using System.Web.WebSockets;
 using WcfWithWsServer.JsonRpcHypervisor;
 
 namespace WcfWithWsServer.WsApiCtler
@@ -113,34 +110,8 @@ namespace WcfWithWsServer.WsApiCtler
                 return;
             }
 
-            // var httpListenerContext = owinContext.Get<HttpListenerContext>(typeof(HttpListenerContext).FullName);
-            // if (httpListenerContext == null)
-            // {
-            //     owinContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-            //     return;
-            // }
-
-           // WebSocket webSocket = null;
             try
             {
-                //var webSocketContext = await httpListenerContext.AcceptWebSocketAsync("jsonrpc").ConfigureAwait(false);
-                //webSocket = webSocketContext.WebSocket;
-                // await AcceptWebSocketAsync(owinContext, ( async socket =>
-                // {
-                //     if (socket.State == WebSocketState.Open)
-                //     {
-                //         string remoteIp = owinContext.Request.RemoteIpAddress;
-                //         int remotePort = owinContext.Request.RemotePort ?? 0;
-                //         // Start WebSocket session (handle messages)
-                //         await JsonRcpHypervisorService.Instance.WebsocketOpenedAsync(socket, remoteIp, remotePort)
-                //             .ConfigureAwait(false);
-                //     }
-                //     else
-                //     {
-                //         throw new InvalidOperationException("WebSocket is not in an open state.");
-                //     }
-                // }));
-
                 // Below is good
                 var  acceptOptions = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
                 {
@@ -167,23 +138,6 @@ namespace WcfWithWsServer.WsApiCtler
             {
                 Console.WriteLine($"WebSocket error: {ex.Message}");
             }
-            // finally
-            // {
-            //     // OWIN expects the response to be completed.
-            //     if (owinContext.Response.Body.CanWrite)
-            //     {
-            //         try
-            //         {
-            //             // Writing an empty response ensures OWIN finalizes the request properly.
-            //             owinContext.Response.StatusCode = (int)HttpStatusCode.SwitchingProtocols;
-            //             await owinContext.Response.Body.FlushAsync();
-            //         }
-            //         catch (Exception flushEx)
-            //         {
-            //             Console.WriteLine($"Error flushing response: {flushEx.Message}");
-            //         }
-            //     }
-            // }
         }
 
         private async Task ProcessWebSocketCommunication(WebSocket webSocket)

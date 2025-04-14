@@ -1,3 +1,4 @@
+#if NETFRAMEWORK
 using Microsoft.Owin;
 using Owin;
 using System;
@@ -35,3 +36,4 @@ namespace WcfWithWsServer.WsApiCtler
         }
     }
 }
+#endif
