@@ -115,7 +115,6 @@ ServiceHost serviceHost )
             while (true)
             {
                 HttpListenerContext context = await listener.GetContextAsync();
-
                 if (context.Request.IsWebSocketRequest)
                 {
                     try

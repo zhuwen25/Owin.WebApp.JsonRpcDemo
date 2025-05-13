@@ -8,7 +8,7 @@
     <Copyright>Copyright ©  2025</Copyright>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
-    <TargetFrameworks>net9.0;net472</TargetFrameworks>
+    <TargetFramework>net472</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\AzureHypervisor\AzureHypervisor.csproj" />
@@ -20,23 +20,26 @@
     <PackageReference Include="MessagePack.Annotations" />
     <PackageReference Include="Microsoft.Owin.Host.HttpListener" />
     <PackageReference Include="Microsoft.Owin.Host.SystemWeb" Version="4.2.2" />
-    <PackageReference Include="Owin" Version="1.0.0" />    
+    <PackageReference Include="Owin" Version="1.0.0" />
+    <PackageReference Include="Microsoft.AspNet.WebApi.Core" Version="5.3.0" />
+    <PackageReference Include="Microsoft.AspNet.WebApi.Owin" Version="5.3.0" />
+    <PackageReference Include="Microsoft.AspNet.WebApi.Client" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.2" />
+    <PackageReference Include="Microsoft.Owin.Hosting" Version="4.2.2" />
   </ItemGroup>
+  
   <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
   </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNet.WebApi.Core" Version="5.3.0" />
-    <PackageReference Include="Microsoft.AspNet.WebApi.Owin" Version="5.3.0" />
-    <PackageReference Include="Microsoft.AspNet.WebApi.Client" />
+  
+  <ItemGroup>    
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
-    <PackageReference Include="Microsoft.NET.StringTools" />
-    <PackageReference Include="Microsoft.Owin.Hosting" Version="4.2.2" />
+    <PackageReference Include="Microsoft.NET.StringTools" />   
+    <PackageReference Include="Nerdbank.Streams" Version="2.12.87" />   
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="StreamJsonRpc" Version="2.21.69" />
-    <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.2" />
+    
   </ItemGroup>
 
   

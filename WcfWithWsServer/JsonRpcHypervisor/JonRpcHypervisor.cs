@@ -1,5 +1,6 @@
 using HypervisorCreator;
 using JsonRpcContract.Contracts;
+using Nerdbank.Streams;
 using Newtonsoft.Json;
 using StreamJsonRpc;
 using StreamJsonRpc.Protocol;

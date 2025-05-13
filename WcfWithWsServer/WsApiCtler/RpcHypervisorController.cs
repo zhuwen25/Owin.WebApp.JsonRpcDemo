@@ -8,6 +8,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 using System.Web.Http;
 using WcfWithWsServer.JsonRpcHypervisor;
 
@@ -97,13 +98,37 @@ namespace WcfWithWsServer.WsApiCtler
 
 
         [HttpGet]
+        [Route("connect2")]
+        public async Task Connect2()
+        {
+            HttpContext.Current.AcceptWebSocketRequest((contex) =>
+            {
+
+                var wsContext = contex.WebSocket;
+                if (wsContext != null)
+                {
+                    // Handle the WebSocket connection
+                    return ProcessWebSocketCommunication(wsContext);
+                }
+                else
+                {
+                    throw new InvalidOperationException("WebSocket context is null.");
+                }
+
+            });
+
+
+
+        }
+
+
+        [HttpGet]
         [Route("connect")]
         public async Task HypervisorConnect()
         {
             IOwinContext owinContext = Request.GetOwinContext();
             // Validate WebSocket request
-            if (!string.Equals(owinContext.Request.Headers["Upgrade"], "websocket",
-                    StringComparison.OrdinalIgnoreCase) ||
+            if (!string.Equals(owinContext.Request.Headers["Upgrade"], "websocket", StringComparison.OrdinalIgnoreCase) ||
                 owinContext.Request.Headers["Connection"]?.IndexOf("upgrade", StringComparison.OrdinalIgnoreCase) < 0)
             {
                 owinContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
