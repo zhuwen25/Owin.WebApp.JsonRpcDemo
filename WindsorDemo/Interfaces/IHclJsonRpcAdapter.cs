@@ -19,5 +19,8 @@ namespace WindsorDemo.Interfaces
         /// <param name="targetType">The target type for output</param>
         /// <returns>An wcf object if it supports, otherwise the original object.</returns>
         object ToJsonRpcObject(object hclObject, Type targetType);
+
+
+
     }
 }

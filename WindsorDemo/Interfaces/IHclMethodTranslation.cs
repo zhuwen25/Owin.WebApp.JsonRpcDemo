@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace WindsorDemo.Interfaces
 {
@@ -16,9 +17,7 @@ namespace WindsorDemo.Interfaces
 
         object Invoke(IConnectionDetail connectionDetail, Guid opId);
 
-        object Invoke(IConnectionDetail connectionDetail, CancellationToken cancellationToken, Guid opId);
+        Task<object> InvokeAsync(IConnectionDetail connectionDetail, CancellationToken cancellationToken);
 
-        //IHclMethodTranslation AddConnectionDetails(IConnectionDetails connectionDetails);
-        //object Invoke(IRemoteHclConnection remoteHclConnection, System.Guid opId);
     }
 }

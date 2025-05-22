@@ -14,7 +14,7 @@ namespace WindsorDemo.Interfaces
     public interface IHypervisor
     {
         string SayHello(IConnectionDetail connectionDetail, string name);
-        int GetStatus(IConnectionDetail connectionDetail, int id);
+        int GetStatus(IConnectionDetail connectionDetail, int status);
         string GetVersion(IConnectionDetail connectionDetail, string inputVersion);
 
         HypervisorCapability[] GetCapabilities(string pluginName );

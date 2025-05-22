@@ -26,6 +26,12 @@ public class Program
         var connectionDetail = new AzureConnectionDetail();
         //Call
         var result = hypervisor.GetStatus(connectionDetail, 100);
+
+
+        var hypervisor2 = container.Resolve<IRemoteHypervisorProxyFactory>().CreateRemoteHypervisor( new VmwareConnectionDetail());
+        var connectionDetail2 = new VmwareConnectionDetail();
+        var result2 = hypervisor2.GetStatus(connectionDetail2, 888);
+
         Console.WriteLine($"Hypervisor Status: {result}");
     }
 }

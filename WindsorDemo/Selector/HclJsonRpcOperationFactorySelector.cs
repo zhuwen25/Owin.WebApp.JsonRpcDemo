@@ -4,17 +4,17 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using WindsorDemo.Interfaces;
-using WindsorDemo.Services;
+using WindsorDemo.RemoteHclOperation;
 
 namespace WindsorDemo.Selector
 {
-    public class HclOperationFactorySelector : DefaultTypedFactoryComponentSelector
+    public class HclJsonRpcOperationFactorySelector : DefaultTypedFactoryComponentSelector
     {
         private readonly Dictionary<string, Type> _specialCaseOperations = new Dictionary<string, Type>()
             { };
         private readonly IKernel _kernel;
 
-        public HclOperationFactorySelector(IToggle toggle,IKernel kernel) {
+        public HclJsonRpcOperationFactorySelector(IToggle toggle,IKernel kernel) {
 
             _kernel = kernel ?? throw new ArgumentNullException(nameof(kernel));
         }
@@ -35,8 +35,8 @@ namespace WindsorDemo.Selector
             {
                 throw new NotImplementedException();
             }
-            return typeof(SynchronousOperation);
+
+            return typeof(SyncToAsyncOperations);
         }
     }
-
 }

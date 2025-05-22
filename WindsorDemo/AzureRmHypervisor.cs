@@ -11,10 +11,10 @@ namespace WindsorDemo
             return $"Hello { name} from {GetType().Name}";
         }
 
-        public int GetStatus(IConnectionDetail connectionDetail, int id)
+        public int GetStatus(IConnectionDetail connectionDetail, int status)
         {
-            Console.WriteLine($"{GetType().Name}: GetStatusAsync called with id: {id}");
-            return id;
+            Console.WriteLine($"{GetType().Name}: GetStatusAsync called with id: {status}");
+            return status;
         }
 
         public string GetVersion(IConnectionDetail connectionDetail, string inputVersion)

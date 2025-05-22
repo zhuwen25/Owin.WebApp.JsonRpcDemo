@@ -13,7 +13,11 @@ namespace WindsorDemo.Services
         private readonly IHclOperationFactory _hclOperationFactory;
         private readonly string _pluginName;
         private readonly IConnectionDetail _connectionDetail;
-        public DynamicHclProxyInterceptor(IConnectionDetail connectionDetail,  IToggle toggle, IKernel kernel,IHclOperationFactory factory)
+        private readonly IWcfClientService _wcfClientService;
+        private readonly IJsonRpcClientService _jsonRpcClientService;
+
+        public DynamicHclProxyInterceptor(IConnectionDetail connectionDetail,  IToggle toggle, IKernel kernel,IHclOperationFactory factory,
+            IWcfClientService wcfClientService,IJsonRpcClientService jsonRpcClientService)
         {
             _pluginName = connectionDetail.FactoryName;
             _connectionDetail = connectionDetail;
@@ -21,6 +25,8 @@ namespace WindsorDemo.Services
             _toggle = toggle;
             _kernel = kernel;
             _hclOperationFactory = factory;
+            this._wcfClientService = wcfClientService;
+            this._jsonRpcClientService = jsonRpcClientService;
         }
         public void Intercept(IInvocation invocation)
         {

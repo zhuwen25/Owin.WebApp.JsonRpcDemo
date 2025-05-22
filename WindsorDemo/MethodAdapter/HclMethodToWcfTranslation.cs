@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using WindsorDemo.Interfaces;
 
 namespace WindsorDemo.Services
@@ -98,7 +99,7 @@ namespace WindsorDemo.Services
             return null;
         }
 
-        public object Invoke(IConnectionDetail connectionDetail, CancellationToken cancellationToken, Guid opId)
+        public Task<object> InvokeAsync(IConnectionDetail connectionDetail, CancellationToken cancellationToken)
         {
             throw new NotSupportedException();
         }

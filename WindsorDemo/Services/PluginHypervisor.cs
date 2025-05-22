@@ -21,7 +21,7 @@ namespace WindsorDemo.Services
             throw new System.NotImplementedException();
         }
 
-        public int GetStatus(IConnectionDetail connectionDetail, int id)
+        public int GetStatus(IConnectionDetail connectionDetail, int status)
         {
             throw new System.NotImplementedException();
         }

@@ -32,9 +32,34 @@ namespace WindsorDemo
             //return container;
             //Registering the components for LoggingInterceptor
 
-            container.Register(Component.For<HclOperationFactorySelector>().LifestyleSingleton(),
-                Component.For<IHclOperationFactory>().AsFactory(c=>c.SelectedWith<HclOperationFactorySelector>()).LifestyleSingleton(),
-                Classes.FromThisAssembly().IncludeNonPublicTypes().BasedOn<IHclOperation>().LifestyleTransient());
+            // container.Register(Component.For<HclOperationFactorySelector>().LifestyleSingleton(),
+            //     Component.For<IHclOperationFactory>().AsFactory(c=>c.SelectedWith<HclOperationFactorySelector>()).LifestyleSingleton(),
+            //     Classes.FromThisAssembly().IncludeNonPublicTypes().BasedOn<IHclOperation>().LifestyleTransient());
+            container.Register(Component.For<IToggle>().
+                ImplementedBy<Toggle>().LifestyleSingleton());
+
+            container.Register(
+                // 1. Register your feature toggle service
+
+                // 2. Register the individual selectors that the toggle-aware selector will use
+                Component.For<HclOperationFactorySelector>().LifestyleSingleton(),
+                Component.For<HclJsonRpcOperationFactorySelector>().LifestyleSingleton(),
+
+                // 3. Register the ToggleAwareHclOperationFactorySelector itself.
+                //    Windsor will inject the IFeatureToggleService, OriginalHclOperationFactorySelector,
+                //    and AlternativeHclOperationFactorySelector into its constructor.
+                Component.For<ToggleAwareHclOperationFactorySelector>().LifestyleSingleton(),
+
+                // 4. Register your factory to use the ToggleAwareHclOperationFactorySelector
+                Component.For<IHclOperationFactory>()
+                    .AsFactory(c => c.SelectedWith<ToggleAwareHclOperationFactorySelector>())
+                    .LifestyleSingleton(),
+
+                // 5. Register all your IHclOperation implementations
+                //    Make sure their naming or selection logic aligns with what
+                //    OriginalHclOperationFactorySelector and AlternativeHclOperationFactorySelector expect.
+                Classes.FromThisAssembly().IncludeNonPublicTypes().BasedOn<IHclOperation>().LifestyleTransient()
+            );
 
 
             container.Register(Component.For<ToggleAwareHclTranslatorSelector>().LifestyleSingleton());
@@ -59,8 +84,6 @@ namespace WindsorDemo
                 Component.For<IHclWcfMethodMap>().ImplementedBy<HclWcfMethodMap>().LifestyleSingleton(),
                 Component.For<IHclJsonRpcMethodMap>().ImplementedBy<HclJsonRpcMethodMap>().LifestyleSingleton());
 
-            container.Register(Component.For<IToggle>().
-                ImplementedBy<Toggle>().LifestyleSingleton());
 
             //Add the sub-dependency Resolver ---
             //This resolver will inject the correct IHclMethodTranslation into IHclOperation instance
@@ -93,7 +116,7 @@ namespace WindsorDemo
                 })),
 
                 // *** This is the key registration for your proxied hypervisor ***
-                Component.For<IRemoteHypervisor>().ImplementedBy<PluginHypervisor>().Named("AzureRm").Interceptors(typeof(LoggingInterceptor))
+                Component.For<IRemoteHypervisor>().ImplementedBy<PluginHypervisor>().Interceptors(typeof(LoggingInterceptor))
                     .Interceptors(InterceptorReference.ForType<DynamicHclProxyInterceptor>()).Last
                     .LifestyleTransient()
                     .DependsOn(Dependency.OnValue("connectionDetail", null)),

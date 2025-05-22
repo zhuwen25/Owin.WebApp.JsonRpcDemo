@@ -15,4 +15,10 @@ namespace WindsorDemo.Interfaces
         public string FactoryName { get; set; } = "AzureRm";
         public string ConnectionString { get; set; } = "DefaultConnection";
     }
+
+    public class VmwareConnectionDetail : IConnectionDetail
+    {
+        public string FactoryName { get; set; } = "Vmware";
+        public string ConnectionString { get; set; } = "DefaultConnection";
+    }
 }

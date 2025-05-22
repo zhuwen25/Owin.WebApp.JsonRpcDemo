@@ -8,7 +8,6 @@ namespace WindsorDemo
 {
     public class PluginHypervisorFactory : IRemoteHypervisorProxyFactory
     {
-
         private readonly IKernel _kernel;
 
         public PluginHypervisorFactory(IKernel kernel)
@@ -17,6 +16,7 @@ namespace WindsorDemo
         }
         public IRemoteHypervisor CreateRemoteHypervisor(IConnectionDetail connectionDetail)
         {
+
             if (connectionDetail != null)
             {
                 Console.WriteLine($"Factory.GetHypervisor: ConnectionDetail type: {connectionDetail.GetType().FullName}");
@@ -26,6 +26,7 @@ namespace WindsorDemo
             {
                 { "connectionDetail", connectionDetail },
             };
+
             return _kernel.Resolve<IRemoteHypervisor>(kernelArguments);
         }
     }
